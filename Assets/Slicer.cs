@@ -6,6 +6,7 @@ public class Slicer
 {
     public static bool currentlyCutting;
     public static Mesh originalMesh;
+    public static GameObject originalGameObject;
 
     public static void Cut(GameObject _originalGameObject, Vector3 _contactPoint, Vector3 _direction, Material _cutMaterial = null,
         bool fill = true, bool _addRigidBody = false)
@@ -18,8 +19,9 @@ public class Slicer
         currentlyCutting = true;
 
         Plane plane = new Plane(_originalGameObject.transform.InverseTransformDirection(-_direction),
-            Vector3.zero);
+            _originalGameObject.transform.InverseTransformPoint(_contactPoint));
 
+        originalGameObject = _originalGameObject;
         originalMesh = _originalGameObject.GetComponent<MeshFilter>().mesh;
         List<Vector3> addedVertices = new List<Vector3>();
 
@@ -76,18 +78,22 @@ public class Slicer
 
         Vector2[] uvs = new Vector2[] { };
 
-        Debug.Log(vertices);
         return new MeshTriangle(vertices, normals, uvs, submeshIndex);
     }
 
     public static void GenerateGameObject(GeneratedMesh mesh)
     {
         GameObject newGameObject = new GameObject("Generated Slice");
+        newGameObject.transform.localScale = originalGameObject.transform.localScale;
+        newGameObject.transform.position = originalGameObject.transform.position;
+
         newGameObject.AddComponent<MeshFilter>();
         newGameObject.AddComponent<MeshRenderer>();
 
         newGameObject.GetComponent<MeshFilter>().mesh.vertices = mesh.Vertices.ToArray();
         newGameObject.GetComponent<MeshFilter>().mesh.normals = mesh.Normals.ToArray();
+        newGameObject.GetComponent<MeshFilter>().mesh.SetUVs(0, mesh.UVs);
+        newGameObject.GetComponent<MeshRenderer>().material = originalGameObject.GetComponent<MeshRenderer>().material;
 
         for (int i = 0; i < mesh.SubmeshIndices.Count; i++)
         {
