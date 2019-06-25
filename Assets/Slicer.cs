@@ -77,6 +77,7 @@ public class Slicer
         GenerateGameObject(leftMesh);
         GenerateGameObject(rightMesh);
         Object.Destroy(_originalGameObject);
+        currentlyCutting = false;
     }
 
     public static MeshTriangle GetTriangle(int indexA, int indexB, int indexC, int submeshIndex)
@@ -123,8 +124,8 @@ public class Slicer
         SortVerticesFromIntersectedTriangle(_triangle, leftSide, leftMeshTriangle, rightMeshTriangle);
 
         // Using the fake triangle, we generate either one or two triangles per side
-        MakeTriangles(_plane, _triangle, _leftSide, _addedVertices, leftMeshTriangle, rightMeshTriangle);
-        MakeTriangles(_plane, _triangle, _rightSide, _addedVertices, rightMeshTriangle, leftMeshTriangle);
+        MakeTriangles(_plane, _triangle, _leftSide, _addedVertices, leftMeshTriangle, rightMeshTriangle, true);
+        MakeTriangles(_plane, _triangle, _rightSide, _addedVertices, rightMeshTriangle, leftMeshTriangle, false);
     }
 
     private static void SortVerticesFromIntersectedTriangle(MeshTriangle _triangle, List<bool> leftSide, MeshTriangle leftMeshTriangle, MeshTriangle rightMeshTriangle)
@@ -185,7 +186,7 @@ public class Slicer
         }
     }
 
-    private static void MakeTriangles(Plane _plane, MeshTriangle _triangle, GeneratedMesh _currentSide, List<Vector3> _addedVertices, MeshTriangle currentMeshTriangle, MeshTriangle oppositeMeshTriangle)
+    private static void MakeTriangles(Plane _plane, MeshTriangle _triangle, GeneratedMesh _currentSide, List<Vector3> _addedVertices, MeshTriangle currentMeshTriangle, MeshTriangle oppositeMeshTriangle, bool addVertices)
     {
         float normalizedDistance;
         float distance;
@@ -196,7 +197,6 @@ public class Slicer
         normalizedDistance = distance / (oppositeMeshTriangle.Vertices[0] - currentMeshTriangle.Vertices[0]).magnitude;
 
         Vector3 vertLeft = Vector3.Lerp(currentMeshTriangle.Vertices[0], oppositeMeshTriangle.Vertices[0], normalizedDistance);
-        _addedVertices.Add(vertLeft);
         Vector3 normalLeft = Vector3.Lerp(currentMeshTriangle.Normals[0], oppositeMeshTriangle.Normals[0], normalizedDistance);
         Vector2 uvLeft = Vector2.Lerp(currentMeshTriangle.UVs[0], oppositeMeshTriangle.UVs[0], normalizedDistance);
 
@@ -204,8 +204,13 @@ public class Slicer
 
         normalizedDistance = distance / (oppositeMeshTriangle.Vertices[1] - currentMeshTriangle.Vertices[1]).magnitude;
         Vector3 vertRight = Vector3.Lerp(currentMeshTriangle.Vertices[1], oppositeMeshTriangle.Vertices[1], normalizedDistance);
-        _addedVertices.Add(vertRight);
 
+        // Since we call this method twice, prevent adding new vertices twice
+        if (addVertices)
+        {
+            _addedVertices.Add(vertLeft);
+            _addedVertices.Add(vertRight);
+        }
         Vector3 normalRight = Vector3.Lerp(currentMeshTriangle.Normals[1], oppositeMeshTriangle.Normals[1], normalizedDistance);
         Vector3 uvRight = Vector2.Lerp(currentMeshTriangle.UVs[1], oppositeMeshTriangle.UVs[1], normalizedDistance);
 
@@ -330,7 +335,7 @@ public class Slicer
             Vector3[] normals = new Vector3[] { -_plane.normal, -_plane.normal, -_plane.normal };
             Vector2[] uvs = new Vector2[] { uv1, uv2, new Vector2(0.5f, 0.5f) };
 
-            MeshTriangle currentTriangle = new MeshTriangle(vertices, normals, uvs, originalMesh.subMeshCount);
+            MeshTriangle currentTriangle = new MeshTriangle(vertices, normals, uvs, originalMesh.subMeshCount + 1);
 
             // Make sure triangle is facing the right way
             if(Vector3.Dot(Vector3.Cross(vertices[1] - vertices[0], vertices[2] - vertices[0]), normals[0]) < 0)
@@ -341,7 +346,7 @@ public class Slicer
             _leftMesh.AddTriangle(currentTriangle);
 
             normals = new Vector3[] { _plane.normal, _plane.normal, _plane.normal };
-            currentTriangle = new MeshTriangle(vertices, normals, uvs, originalMesh.subMeshCount);
+            currentTriangle = new MeshTriangle(vertices, normals, uvs, originalMesh.subMeshCount + 1);
 
             if (Vector3.Dot(Vector3.Cross(vertices[1] - vertices[0], vertices[2] - vertices[0]), normals[0]) < 0)
             {
@@ -360,6 +365,7 @@ public class Slicer
 
         newGameObject.AddComponent<MeshFilter>();
         newGameObject.AddComponent<MeshRenderer>();
+        newGameObject.AddComponent<MeshCollider>();
 
         newGameObject.GetComponent<MeshFilter>().mesh.vertices = mesh.Vertices.ToArray();
         newGameObject.GetComponent<MeshFilter>().mesh.normals = mesh.Normals.ToArray();
@@ -388,6 +394,11 @@ public class Slicer
         {
             newGameObject.GetComponent<MeshFilter>().mesh.SetTriangles(mesh.SubmeshIndices[i], i);
         }
+
+        
+        newGameObject.AddComponent<Rigidbody>();
+        newGameObject.GetComponent<MeshCollider>().sharedMesh = newGameObject.GetComponent<MeshFilter>().mesh;
+        newGameObject.GetComponent<MeshCollider>().convex = true;
     }
 
     private static void FlipTriangle(MeshTriangle triangle)

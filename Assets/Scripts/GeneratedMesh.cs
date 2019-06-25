@@ -22,16 +22,11 @@ public class GeneratedMesh
         Normals.AddRange(_triangle.Normals);
         UVs.AddRange(_triangle.UVs);
 
-        if(SubmeshIndices.Count < _triangle.SubmeshIndex + 1)
-        {
-            Debug.Log("Submeshindices " + SubmeshIndices.Count);
+        if(SubmeshIndices.Count < _triangle.SubmeshIndex + 1){
             for (int i = submeshIndices.Count; i < (_triangle.SubmeshIndex + 1); i++)
             {
-                Debug.Log(i);
                 SubmeshIndices.Add(new List<int>());
             }
-            Debug.Log("After " + SubmeshIndices.Count);
-
         }
 
         for (int i = 0; i < 3; i++)
