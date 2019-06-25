@@ -18,21 +18,25 @@ public class GeneratedMesh
     {
         int currentVerticeCount = vertices.Count;
 
-        vertices.AddRange(_triangle.Vertices);
-        normals.AddRange(_triangle.Normals);
-        uvs.AddRange(_triangle.UVs);
+        Vertices.AddRange(_triangle.Vertices);
+        Normals.AddRange(_triangle.Normals);
+        UVs.AddRange(_triangle.UVs);
 
-        if(submeshIndices.Count < _triangle.SubmeshIndex + 1)
+        if(SubmeshIndices.Count < _triangle.SubmeshIndex + 1)
         {
-            for (int i = submeshIndices.Count; i < _triangle.SubmeshIndex + 1; i++)
+            Debug.Log("Submeshindices " + SubmeshIndices.Count);
+            for (int i = submeshIndices.Count; i < (_triangle.SubmeshIndex + 1); i++)
             {
-                submeshIndices.Add(new List<int>());
+                Debug.Log(i);
+                SubmeshIndices.Add(new List<int>());
             }
+            Debug.Log("After " + SubmeshIndices.Count);
+
         }
 
         for (int i = 0; i < 3; i++)
         {
-            submeshIndices[_triangle.SubmeshIndex].Add(currentVerticeCount + i);
+            SubmeshIndices[_triangle.SubmeshIndex].Add(currentVerticeCount + i);
         }
     }
 }

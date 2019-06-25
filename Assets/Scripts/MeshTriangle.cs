@@ -21,7 +21,6 @@ public class MeshTriangle
         vertices.AddRange(_vertices);
         normals.AddRange(_normals);
         uvs.AddRange(_uvs);
-
         submeshIndex = _submeshIndex;
     }
 
