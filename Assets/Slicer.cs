@@ -399,6 +399,9 @@ public class Slicer
         newGameObject.AddComponent<Rigidbody>();
         newGameObject.GetComponent<MeshCollider>().sharedMesh = newGameObject.GetComponent<MeshFilter>().mesh;
         newGameObject.GetComponent<MeshCollider>().convex = true;
+
+        // Small force for a more subtle cutting effect
+        newGameObject.GetComponent<Rigidbody>().AddExplosionForce(0.5f, originalGameObject.transform.position, 0.5f);
     }
 
     private static void FlipTriangle(MeshTriangle triangle)
