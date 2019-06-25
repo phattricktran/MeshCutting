@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using System.Linq;
 
 public class SlicerUI : MonoBehaviour
 {
@@ -82,10 +83,19 @@ public class SlicerUI : MonoBehaviour
 		/* Debug */
 		Ray ray = cam.ScreenPointToRay(Input.mousePosition);
 		Ray ray1 = cam.ScreenPointToRay(startPositionScreen);
-		Debug.Log(Input.mousePosition);
+
 		Debug.DrawRay(startPosition, ray1.direction * 1000, Color.red);
 		Debug.DrawRay(endPosition, ray.direction * 1000, Color.red);
-	}
+
+        Vector3 step = (Input.mousePosition - startPositionScreen) / 10;
+        Vector3 current = startPositionScreen;
+        for (int i = 0; i < 10; i++)
+        {
+            Ray ray_i = cam.ScreenPointToRay(current);  
+            Debug.DrawRay(startPosition, ray_i.direction * 1000, Color.blue);
+            current = current + step;
+        }
+    }
 
 	private List<GameObject> FindObjects(Vector3 start, Vector3 end)
 	{
@@ -99,24 +109,27 @@ public class SlicerUI : MonoBehaviour
 		// TODO: Set this somewhere else
 		float halfy = 0.000001f;
 
+        List<RaycastHit> raycastHits = new List<RaycastHit>();
+        HashSet<GameObject> gameObjects = new HashSet<GameObject>();
 
+        Vector3 step = (end - start) / 10;
+        Vector3 current = start;
+        for (int i = 0; i < 10; i++)
+        {
+            RaycastHit hit;
+            Ray ray = cam.ScreenPointToRay(current);
 
-        RaycastHit[] raycastHits = Physics.BoxCastAll(
-			centerWorld,
-			new Vector3(halfx, halfy, 1),
-			cameraDirection,
-            Quaternion.FromToRotation(start, end)
-			);
-
-		List<GameObject> objectsHit = new List<GameObject>();
-		foreach (RaycastHit hit in raycastHits)
-		{
-            if (hit.collider.gameObject.tag != "UnCuttable")
+            if (Physics.Raycast(ray, out hit))
             {
-                objectsHit.Add(hit.collider.gameObject);
+                GameObject objectHit = hit.transform.gameObject;
+                if (objectHit.tag != "UnCuttable")
+                {
+                    gameObjects.Add(objectHit);
+                }
             }
-		}
+            current += step;
+        }
 
-		return objectsHit;
+        return gameObjects.ToList(); ;
 	}
 }

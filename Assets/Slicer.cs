@@ -35,7 +35,6 @@ public class Slicer
         int[] submeshIndices;
         int triangleIndexA, triangleIndexB, triangleIndexC;
 
-        Debug.Log(originalMesh.vertices.Length);
         for (int i = 0; i < originalMesh.subMeshCount; i++)
         {
             submeshIndices = originalMesh.GetTriangles(i);
@@ -70,6 +69,13 @@ public class Slicer
                     CutTriangle(plane, currentTriangle, triangleALeftSide, triangleBLeftSide, triangleCLeftSide, leftMesh, rightMesh, addedVertices);
                 }
             }
+        }
+
+        // if either mesh has no vertices, return
+        if (leftMesh.Vertices.Count == 0 || rightMesh.Vertices.Count == 0 || addedVertices.Count == 0)
+        {
+            currentlyCutting = false;
+            return;
         }
 
         FillCut(addedVertices, plane, leftMesh, rightMesh);
@@ -251,7 +257,7 @@ public class Slicer
         List<Vector3> vertices = new List<Vector3>();
         List<Vector3> polygon = new List<Vector3>();
 
-        for (int i = 0; i < _addedVertices.Count; i++)
+        for (int i = 0; i < _addedVertices.Count; i = i + 2)
         {
             if(!vertices.Contains(_addedVertices[i]))
             {
@@ -377,7 +383,6 @@ public class Slicer
 
         for (int i = 0; i < mesh.SubmeshIndices.Count; i++)
         {
-            Debug.Log(i);
             if (i < originalMaterials.Length)
             {
                 materials[i] = originalMaterials[i];
@@ -401,7 +406,7 @@ public class Slicer
         newGameObject.GetComponent<MeshCollider>().convex = true;
 
         // Small force for a more subtle cutting effect
-        newGameObject.GetComponent<Rigidbody>().AddExplosionForce(0.5f, originalGameObject.transform.position, 0.5f);
+        newGameObject.GetComponent<Rigidbody>().AddExplosionForce(100.0f, originalGameObject.transform.position, 10f);
     }
 
     private static void FlipTriangle(MeshTriangle triangle)
